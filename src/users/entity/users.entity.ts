@@ -13,6 +13,7 @@ import { ProfileEntity } from './profile.entity';
 import { CartEntity } from 'src/cart/entities/cart.entity';
 import { OrderEntity } from 'src/order/entities/order.entity';
 import { Role } from 'src/constants/enums';
+import { WishlistEntity } from 'src/wishlist/entities/wishlist.entity';
 
 @Entity({ name: 'users' })
 export class UserEntity {
@@ -47,6 +48,11 @@ export class UserEntity {
 
   @OneToMany(() => OrderEntity, (order) => order.id)
   orders: OrderEntity;
+
+  @OneToMany(() => WishlistEntity, (wishlist) => wishlist.user, {
+    cascade: true,
+  })
+  wishlist: WishlistEntity[];
 
   @BeforeInsert()
   encryptPassword() {

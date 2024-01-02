@@ -11,6 +11,7 @@ import { ProductModule } from './product/product.module';
 import { TermsModule } from './terms/terms.module';
 import { UsersModule } from './users/users.module';
 import { CartModule } from './cart/cart.module';
+import { WishlistModule } from './wishlist/wishlist.module';
 
 config();
 
@@ -34,6 +35,7 @@ config();
       migrations: ['migrations/*'],
       autoLoadEntities: true,
       synchronize: true,
+      logging: true,
     }),
 
     ThrottlerModule.forRoot([
@@ -49,6 +51,7 @@ config();
     OrderModule,
     TermsModule,
     CartModule,
+    WishlistModule,
   ],
   controllers: [],
   providers: [],
