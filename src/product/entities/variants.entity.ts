@@ -1,4 +1,11 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  OneToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
+import { ProductEntity } from './product.entity';
 
 @Entity({ name: 'variant' })
 export class VariantEntity {
@@ -11,4 +18,10 @@ export class VariantEntity {
   size: number;
   @Column({ nullable: true })
   material: string;
+  @Column({ nullable: true })
+  image: string;
+
+  @OneToOne(() => ProductEntity, (product) => product.variants)
+  @JoinColumn()
+  product: ProductEntity;
 }

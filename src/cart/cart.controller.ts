@@ -3,46 +3,40 @@ import {
   Controller,
   Delete,
   Get,
-  Param,
   Patch,
   Post,
-  Put,
+  UseGuards
 } from '@nestjs/common';
+import { CurrentUser } from 'src/utils/current-user.decorator';
 import { CartService } from './cart.service';
-import { AddToCartDTO } from './dto/add-to-cart.dto';
-import { CartEntity } from './entities/cart.entity';
+import { CreateCartItemDto } from './dto/create-cart.dto';
+import { UpdateCartDto } from './dto/update-cart.dto';
 
-@Controller('api/carts')
+@UseGuards()
+@Controller('/api/cart')
 export class CartController {
   constructor(private readonly cartService: CartService) {}
 
-  @Post(':userId')
-  async create(@Param('userId') userId: number) {
-    return this.cartService.createCart(userId);
-  }
-
-  @Post('add')
-  async addItemToCart(@Body() addToCartDto: AddToCartDTO) {
-    console.log('Dataaaaaaaaa', addToCartDto);
-
-    return this.cartService.addItem(addToCartDto);
-  }
-
-  @Get(':cartId')
-  async findCartById(@Param('cartId') cartId: number) {
-    return this.cartService.findOne(cartId);
-  }
-
-  @Patch(':cartId')
-  async update(
-    @Param('cartId') cartId: number,
-    @Body() data: Partial<CartEntity>,
+  @Post()
+  addItemToCart(
+    @CurrentUser() currentUser,
+    @Body() createCartDto: CreateCartItemDto,
   ) {
-    return this.cartService.update(cartId, data);
+    return this.cartService.addToCart(currentUser, createCartDto);
   }
 
-  @Delete(':cartId')
-  async delete(@Param('cartId') cartId: number) {
-    return this.cartService.remove(cartId);
+  @Get()
+  getUserCart(@CurrentUser() currentUser) {
+    return this.cartService.getUserCart(currentUser);
+  }
+
+  @Patch()
+  updateCart(@CurrentUser() currentUser, @Body() updateCartDto: UpdateCartDto) {
+    return this.cartService.updateCartItemQuantity(currentUser, updateCartDto);
+  }
+
+  @Delete()
+  removeItemFromCart(@Body('itemId') id: number) {
+    return this.cartService.removeItemFromCart(+id);
   }
 }

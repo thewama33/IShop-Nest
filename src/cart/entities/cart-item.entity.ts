@@ -1,28 +1,25 @@
-// src/entities/cart-item.entity.ts
-
-import { ProductEntity } from 'src/product/entities/product.entity';
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { AbstractEntity } from 'src/utils/entity.abstraction';
+import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 import { CartEntity } from './cart.entity';
+import { ProductEntity } from 'src/product/entities/product.entity';
 
 @Entity({ name: 'cartitem' })
-export class CartItemEntity {
-  @PrimaryGeneratedColumn()
-  id: number;
-
-  @Column({ default: 1 })
+export class CartItemEntity extends AbstractEntity<CartItemEntity> {
+  @Column()
   quantity: number;
 
-  @Column({ nullable: true })
+  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
   price: number;
 
-  @Column({ nullable: true })
-  totalPrice: number;
+  @ManyToOne(() => CartEntity, (cart) => cart.cartItems)
+  @JoinColumn({ name: 'cartId' })
+  cart: CartEntity;
 
-  //@ManyToOne(() => CartEntity, (cart) => cart.items)
-  @Column()
-  cartId: number;
-
-  // @ManyToOne(() => ProductEntity, (product) => product.cartItems)
-  @Column()
-  productId: number;
+  @ManyToOne(() => ProductEntity, (product) => product.cartItems, {
+    onDelete: 'CASCADE',
+    onUpdate: 'CASCADE',
+  })
+  @JoinColumn([{ name: 'productId', referencedColumnName: 'id' }])
+  @ManyToOne(() => ProductEntity, (product) => product.cartItems)
+  product: ProductEntity;
 }

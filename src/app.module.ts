@@ -1,19 +1,16 @@
 import { Module } from '@nestjs/common';
-import { JwtModule } from '@nestjs/jwt';
+import { JwtModule, JwtService } from '@nestjs/jwt';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { config } from 'dotenv';
+import { join } from 'path';
+import 'reflect-metadata';
 import { CategoryModule } from './category/category.module';
-import { CategoryEntity } from './category/entities/category.entity';
-import { ProductEntity } from './product/entities/product.entity';
-import { VariantEntity } from './product/entities/variants.entity';
+import { OrderModule } from './order/order.module';
 import { ProductModule } from './product/product.module';
-import { ProfileEntity } from './users/entity/profile.entity';
-import { UserEntity } from './users/entity/users.entity';
+import { TermsModule } from './terms/terms.module';
 import { UsersModule } from './users/users.module';
 import { CartModule } from './cart/cart.module';
-import { OrderModule } from './order/order.module';
-import 'reflect-metadata';
 
 config();
 
@@ -22,19 +19,20 @@ config();
     JwtModule.register({
       global: true,
       secret: process.env.JWT_SECRET,
-      signOptions: { expiresIn: '1h' },
+      signOptions: { expiresIn: '5h' },
     }),
     TypeOrmModule.forRoot({
-      type: 'mysql',
+      type: 'postgres',
       host: 'localhost',
-      port: 3306,
-      username: 'root',
-      password: '',
+      port: 5432,
+      username: 'postgres',
+      password: '111111',
       database: 'ishop',
-      entities: [
-        __dirname + '/**/*.entity{.ts,.js}',
-      ],
-      // autoLoadEntities: true,
+      entities: [join(__dirname, '/**/*.entity{.ts,.js}')],
+      logger: 'advanced-console',
+      relationLoadStrategy: 'join',
+      migrations: ['migrations/*'],
+      autoLoadEntities: true,
       synchronize: true,
     }),
 
@@ -48,12 +46,11 @@ config();
     UsersModule,
     ProductModule,
     CategoryModule,
-    CartModule,
     OrderModule,
+    TermsModule,
+    CartModule,
   ],
   controllers: [],
   providers: [],
 })
-export class AppModule {
-  configure;
-}
+export class AppModule {}

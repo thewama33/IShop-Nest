@@ -4,22 +4,22 @@ import {
   Injectable,
   NotAcceptableException,
   NotFoundException,
-  UseGuards,
 } from '@nestjs/common';
 
-import { CreateProductDto } from '../product/dto/create-product.dto';
-import { UpdateProductDto } from '../product/dto/update-product.dto';
-import { ProductEntity } from './entities/product.entity';
-import { AuthenticationGuard } from 'src/guards/authentication/authentication.guard';
-import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { max, min } from 'class-validator';
+import { EntityManager, Repository } from 'typeorm';
+import { CreateProductDto } from '../product/dto/create-product.dto';
+import { ProductEntity } from './entities/product.entity';
+import { CategoryEntity } from 'src/category/entities/category.entity';
 
 @Injectable()
 export class ProductService {
   constructor(
     @InjectRepository(ProductEntity)
     private readonly productModel: Repository<ProductEntity>,
+    @InjectRepository(CategoryEntity)
+    private readonly categoryModel: Repository<CategoryEntity>,
+    private readonly entityManager: EntityManager,
   ) {}
 
   async seedProducts() {
@@ -40,32 +40,46 @@ export class ProductService {
     };
   }
 
-  async create(createProductDto: CreateProductDto) {
+  async createProduct(categoryId: number, createProductDto: CreateProductDto) {
+    console.log('category id :', categoryId);
+
     const product = await this.productModel.findOneBy({
       title: createProductDto.title,
     });
 
+    const category = await this.categoryModel.findOneBy({ id: categoryId });
+
+    console.log(category);
+
+    if (!category) throw new NotFoundException('Category is not Exists');
     if (product) throw new NotAcceptableException('Product is Already Exists');
 
-    const isCreated = this.productModel.create(createProductDto);
+    const isProductCreated = this.productModel.create(createProductDto);
+
+    isProductCreated.category = [category];
 
     console.log(createProductDto);
 
-    if (!isCreated) throw new NotAcceptableException('Something went wrong');
+    if (!isProductCreated)
+      throw new NotAcceptableException('Something went wrong');
+
+    await this.productModel.save(isProductCreated);
 
     return { status: HttpStatus.OK, message: 'Product Added Successfully!' };
   }
 
   async findAll(page: number, limit: number) {
-    const totalProducts = (await this.productModel.find()).length;
+    const products = await this.productModel
+      .createQueryBuilder('product')
+      .andWhere('product.stock > 0')
+      .skip(Number(page) * Number(limit))
+      .take(Number(limit))
+      .getMany();
 
-    const totalPages =
-      Math.ceil(totalProducts / Number(limit) - 1) < 0
-        ? 0
-        : Math.ceil(totalProducts / Number(limit) - 1);
-
-    const products = await this.productModel.find();
-    // .find({ skip: Number(page) * Number(limit),comment limit: Number(limit) })
+    // .find({
+    //   skip: Number(page) * Number(limit),
+    //   take: Number(limit),
+    // });
 
     console.log(products);
 
@@ -73,12 +87,24 @@ export class ProductService {
       code: HttpStatus.OK,
       message: 'Results retrived successfully',
       data: products,
-      page: totalPages,
     };
   }
 
-  async findOne(id: string) {
-    const product = await this.productModel.findOneBy({ id: +id });
+  async findOne(id: number) {
+    // const product = await this.productModel.findOneBy({ id: +id });
+
+    const product = await this.productModel
+      .createQueryBuilder('product')
+      .where('product.id = :id', { id: id })
+      .innerJoinAndSelect(
+        'product.variants',
+        'variants',
+        'variants.productId = :id',
+        { id: id },
+      )
+      .getOne();
+
+    console.log('product ID : ' + id);
 
     if (!product) {
       throw new NotFoundException('Product not found!');

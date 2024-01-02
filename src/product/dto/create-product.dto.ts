@@ -1,16 +1,29 @@
-import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import {
+  IsArray,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 
 export class CreateProductDto {
   @IsString()
   @IsNotEmpty()
   title: string;
+
   @IsString()
   @IsNotEmpty()
   description: string;
+
   @IsNumber()
   @IsNotEmpty()
   price: number;
-  @IsString()
+
+  @IsArray()
   @IsNotEmpty()
-  image: string;
+  images: string[];
+
+  @IsOptional()
+  @IsNumber()
+  stock: number;
 }

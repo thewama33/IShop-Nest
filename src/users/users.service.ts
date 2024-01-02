@@ -4,14 +4,12 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-
 import { UserEntity } from './entity/users.entity';
-
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { EntityManager, Repository } from 'typeorm';
 import { CreateUserInfoDTO } from './dto/create-user-profile.dto';
-import { ProfileEntity } from './entity/profile.entity';
 import { UpdateUserProfile } from './dto/update-user-profile.dto';
+import { ProfileEntity } from './entity/profile.entity';
 
 @Injectable()
 export class UsersService {
@@ -20,13 +18,17 @@ export class UsersService {
     private readonly userModel: Repository<UserEntity>,
     @InjectRepository(ProfileEntity)
     private readonly profileModel: Repository<ProfileEntity>,
+    private readonly entityManager: EntityManager,
   ) {}
 
-  async createUserProfile(createUserProfileDto: CreateUserInfoDTO, request) {
+  async createUserProfile(
+    createUserProfileDto: CreateUserInfoDTO,
+    currentUser,
+  ) {
+    const userId = currentUser.id;
     try {
-      const userData = await this.userModel.findOne({
-        where: { id: request.id },
-        select: { password: false, role: false },
+      const userData = await this.userModel.findOneBy({
+        id: userId,
       });
 
       const savedProfile = await this.profileModel.save(createUserProfileDto);
@@ -46,10 +48,22 @@ export class UsersService {
   }
 
   async findAll() {
-    const users = await this.userModel.find({
-      relations: ['profile'],
-      select: { password: false, role: false },
-    });
+    const users = await this.entityManager
+      .createQueryBuilder(UserEntity, 'users')
+      .innerJoinAndSelect('users.profile', 'profile')
+      .select([
+        'users.id AS id',
+        'users.email AS email',
+        'users.role AS role',
+        'profile.firstName AS firstName',
+        'profile.lastName AS lastName',
+        'profile.age AS age',
+        'profile.phoneNumber AS phoneNumber',
+        'profile.address AS address',
+        'profile.city AS city',
+        'profile.country AS country',
+      ])
+      .getRawMany();
 
     return {
       code: HttpStatus.OK,
@@ -58,17 +72,24 @@ export class UsersService {
     };
   }
 
-  //Getting user id form the Token
-  //
-
-  async findOne(request) {
-    const user = await this.userModel.findOne({
-      select: { password: false, role: false },
-      where: { id: request.id },
-      relations: ['profile'],
-    });
-
-    if (!user) throw new NotFoundException('User Not Found');
+  async findOne(currentUser) {
+    const user = await this.entityManager
+      .createQueryBuilder(UserEntity, 'users')
+      .leftJoinAndSelect('users.profile', 'profile')
+      .where('users.id = :id', { id: currentUser.id })
+      .select([
+        'users.id As id',
+        'users.email As email',
+        'profile.firstName AS firstName',
+        'profile.lastName AS lastName',
+        'profile.age AS age',
+        'profile.phoneNumber AS phoneNumber',
+        'profile.address AS address',
+        'profile.city AS city',
+        'profile.country AS country',
+        'users.role as role',
+      ])
+      .getRawOne();
 
     return {
       code: HttpStatus.OK,
@@ -77,52 +98,75 @@ export class UsersService {
     };
   }
 
-  async updateUserProfile(updateUserProfileDto: UpdateUserProfile, request) {
+  async updateUserProfile(
+    updateUserProfileDto: UpdateUserProfile,
+    currentUser,
+  ) {
+    // const profileRepo = await this.userModel
+    //   .createQueryBuilder()
+    //   .update(ProfileEntity)
+    //   .set({ ...updateUserProfileDto })
+    //   .where('userId = :id  ', { id: 5 })
+    //   .execute();
+
     // Find the user's profile with the specified userId
-    const profile = await this.profileModel.findOne({
-      where: {
-        user: { id: request.id },
-      },
-    });
+    // const profile = await this.profileModel.findOne({
+    //   where: {
+    //     user: { id: request.id },
+    //   },
+    // });
 
-    if (!profile) {
-      // Handle the case when the profile does not exist
-      return {
-        code: HttpStatus.NOT_FOUND,
-        message: 'Profile not found',
-      };
-    }
+    // if (!profile) {
+    //   // Handle the case when the profile does not exist
+    //   return {
+    //     code: HttpStatus.NOT_FOUND,
+    //     message: 'Profile not found',
+    //   };
+    // }
 
-    // Update the profile properties using the updateUserProfileDto
-    Object.assign(profile, updateUserProfileDto);
+    // // Update the profile properties using the updateUserProfileDto
+    // Object.assign(profile, updateUserProfileDto);
 
-    // Save the updated profile
-    const savedProfile = await this.profileModel.save(profile);
+    // // Save the updated profile
+    // await this.profileModel.save(profile);
+
+    const profile = await this.entityManager
+      .createQueryBuilder(ProfileEntity, 'profile')
+      .update(ProfileEntity)
+      .set(updateUserProfileDto)
+      .where('userId = :id', { id: currentUser.id })
+      .execute();
 
     return {
       code: HttpStatus.OK,
       message: 'Profile updated successfully',
-      data: savedProfile,
     };
   }
 
-  async remove(request) {
-    console.log('User ID :', request.id);
+  async remove(currentUser) {
+    try {
+      console.log('User ID :', currentUser);
 
-    // First Get the Model with all its relations
-    // Delete the Model
+      const userId = currentUser.id;
 
-    const user = await this.userModel.findOne({
-      where: { id: request.id },
-      relations: { profile: true },
-    });
+      // First Get the Model with all its relations
+      // Delete the Model
 
-    if (user) {
-      await this.userModel.remove(user);
+      const user = await this.userModel.findOne({
+        where: { id: userId },
+        relations: { profile: true },
+      });
+
+      if (user) {
+        await this.userModel.remove(user);
+      }
+
+      return {
+        code: HttpStatus.OK,
+        message: 'User removed successfully',
+      };
+    } catch (error) {
+      throw new BadRequestException(error.message);
     }
-    return {
-      code: HttpStatus.OK,
-      message: 'User removed successfully',
-    };
   }
 }

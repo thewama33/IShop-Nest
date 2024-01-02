@@ -1,32 +1,36 @@
 import {
-  MiddlewareConsumer,
-  Module,
-  NestModule,
-  RequestMethod,
+  Module
 } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
+import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { config } from 'dotenv';
+import { AuthGuard } from 'src/guards/authentication.guard';
 import { AuthService } from './auth.service';
 import { ProfileEntity } from './entity/profile.entity';
 import { UserEntity } from './entity/users.entity';
-import { JwtStrategy } from './jwtStrategy.service';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
-import { UserValidateMiddlewareMiddleware } from 'src/middlewares/user-validate.middleware';
 
+config();
 @Module({
-  imports: [TypeOrmModule.forFeature([UserEntity, ProfileEntity])],
+  imports: [
+    TypeOrmModule.forFeature([UserEntity, ProfileEntity]),
+    JwtModule.register({
+      global: true,
+      secret: process.env.JWT_SECRET,
+      signOptions: { expiresIn: '5d' },
+    }),
+  ],
+  exports: [UsersService, AuthService],
   controllers: [UsersController],
-  providers: [UsersService, AuthService, JwtStrategy],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: AuthGuard,
+    },
+    UsersService,
+    AuthService,
+  ],
 })
-export class UsersModule implements NestModule {
-  configure(consumer: MiddlewareConsumer) {
-    consumer
-      .apply(UserValidateMiddlewareMiddleware)
-      .forRoutes(
-        { path: 'api/users/delete', method: RequestMethod.DELETE },
-        { path: 'api/users/single', method: RequestMethod.GET },
-        { path: 'api/users/profile', method: RequestMethod.POST },
-        { path: 'api/users/profile', method: RequestMethod.PATCH },
-      );
-  }
-}
+export class UsersModule {}

@@ -2,6 +2,7 @@ import {
   BaseEntity,
   Column,
   Entity,
+  Exclusion,
   JoinColumn,
   OneToOne,
   PrimaryGeneratedColumn,
@@ -9,26 +10,26 @@ import {
 import { UserEntity } from './users.entity';
 
 @Entity({ name: 'profile' })
-export class ProfileEntity extends BaseEntity {
+export class ProfileEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
+  @Column({ nullable: true })
   firstName: string;
-  @Column()
+  @Column({ nullable: true })
   lastName: string;
-  @Column()
+  @Column({ nullable: true })
   age: number;
-  @Column()
+  @Column({ nullable: true })
   phoneNumber: string;
-  @Column()
+  @Column({ nullable: true })
   address: string;
-  @Column()
+  @Column({ nullable: true })
   city: string;
-  @Column()
+  @Column({ nullable: true })
   country: string;
 
-  @OneToOne(() => UserEntity, (user) => user.profile, { onDelete: 'CASCADE' }) // specify inverse side as a second parameter
+  @OneToOne(() => UserEntity, { onDelete: 'CASCADE' }) // specify inverse side as a second parameter
   @JoinColumn({ name: 'userId' })
   user: UserEntity;
 }

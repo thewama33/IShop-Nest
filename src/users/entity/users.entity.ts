@@ -1,7 +1,5 @@
 import * as bcrypt from 'bcrypt';
-import { CartEntity } from 'src/cart/entities/cart.entity';
 import {
-  BaseEntity,
   BeforeInsert,
   Column,
   CreateDateColumn,
@@ -12,15 +10,13 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { ProfileEntity } from './profile.entity';
-
-enum Role {
-  USER,
-  ADMIN,
-}
+import { CartEntity } from 'src/cart/entities/cart.entity';
+import { OrderEntity } from 'src/order/entities/order.entity';
+import { Role } from 'src/constants/enums';
 
 @Entity({ name: 'users' })
-export class UserEntity extends BaseEntity {
-  @PrimaryGeneratedColumn()
+export class UserEntity {
+  @PrimaryGeneratedColumn('uuid')
   id: number;
 
   @Column({ type: 'varchar', unique: true })
@@ -29,24 +25,28 @@ export class UserEntity extends BaseEntity {
   @Column()
   password: string;
 
+  @Column({ nullable: true })
+  fcmToken: string;
+
   @Column({ type: 'enum', enum: Role, default: Role.USER })
   role: Role;
 
   @CreateDateColumn()
-  createdAt: String;
+  createdAt: string;
 
   @UpdateDateColumn()
-  updtedAt: String;
+  updtedAt: string;
 
-  @OneToOne(() => ProfileEntity, (profile) => profile.user)
+  @OneToOne(() => ProfileEntity, (profile) => profile.user, { eager: true })
   profile: ProfileEntity;
 
-  @OneToOne(() => CartEntity, (cart) => cart.user)
-  cart: CartEntity;
+  @OneToMany(() => CartEntity, (cart) => cart.user, {
+    cascade: true,
+  })
+  cart: CartEntity[];
 
-  // @OneToOne((type) => OrderEntity, (order) => order.id)
-  // @JoinColumn()
-  // order: OrderEntity;
+  @OneToMany(() => OrderEntity, (order) => order.id)
+  orders: OrderEntity;
 
   @BeforeInsert()
   encryptPassword() {

@@ -3,7 +3,6 @@ import {
   Column,
   CreateDateColumn,
   Entity,
-  JoinColumn,
   JoinTable,
   ManyToMany,
   PrimaryGeneratedColumn,
@@ -21,12 +20,22 @@ export class CategoryEntity {
   image: string;
 
   @CreateDateColumn()
-  createdAt: String;
+  createdAt: string;
 
   @UpdateDateColumn()
-  updtedAt: String;
+  updtedAt: string;
 
   @ManyToMany(() => ProductEntity, (product) => product.category)
-  @JoinColumn()
+  @JoinTable({
+    name: 'categories_products',
+    joinColumn: {
+      name: 'category_id',
+      referencedColumnName: 'id',
+    },
+    inverseJoinColumn: {
+      name: 'product_id',
+      referencedColumnName: 'id',
+    },
+  })
   product: ProductEntity[];
 }

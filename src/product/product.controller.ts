@@ -1,22 +1,16 @@
 import {
   Body,
   Controller,
-  Delete,
   Get,
   Param,
   ParseIntPipe,
-  Patch,
   Post,
   Query,
-  UseGuards,
   ValidationPipe,
 } from '@nestjs/common';
 import { CreateProductDto } from '../product/dto/create-product.dto';
-import { UpdateProductDto } from '../product/dto/update-product.dto';
 import { ProductService } from './product.service';
-import { AuthenticationGuard } from 'src/guards/authentication/authentication.guard';
 
-//@UseGuards(AuthenticationGuard)
 @Controller('api/products')
 export class ProductController {
   constructor(private readonly productsService: ProductService) {}
@@ -26,12 +20,13 @@ export class ProductController {
     return this.productsService.seedProducts();
   }
 
-  @Post()
+  @Post(':categoryId')
   create(
     @Body(new ValidationPipe())
     createProductDto: CreateProductDto,
+    @Param('categoryId') categoryId: number,
   ) {
-    return this.productsService.create(createProductDto);
+    return this.productsService.createProduct(categoryId, createProductDto);
   }
 
   @Get('all')
@@ -47,7 +42,7 @@ export class ProductController {
   @Get()
   findOne(
     @Query('id')
-    id: string,
+    id: number,
   ) {
     return this.productsService.findOne(id);
   }

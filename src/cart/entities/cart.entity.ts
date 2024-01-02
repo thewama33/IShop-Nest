@@ -1,27 +1,25 @@
-import { UserEntity } from 'src/users/entity/users.entity';
 import {
-  BaseEntity,
-  BeforeInsert,
-  BeforeUpdate,
   Column,
   Entity,
   JoinColumn,
   ManyToOne,
   OneToMany,
   OneToOne,
-  PrimaryGeneratedColumn,
 } from 'typeorm';
+import { AbstractEntity } from 'src/utils/entity.abstraction';
+import { UserEntity } from 'src/users/entity/users.entity';
 import { CartItemEntity } from './cart-item.entity';
 
 @Entity({ name: 'cart' })
-export class CartEntity extends BaseEntity {
-  @PrimaryGeneratedColumn()
-  id: number;
-
-  @OneToOne(() => UserEntity, (user) => user.cart)
+export class CartEntity extends AbstractEntity<CartEntity> {
+  @Column({ type: 'bool', default: false })
+  isCompleted: boolean;
+  @ManyToOne(() => UserEntity, (user) => user.cart)
   @JoinColumn()
   user: UserEntity;
 
- // @OneToMany(() => CartItemEntity, (cartItem) => cartItem.cart)
- // items: CartItemEntity[];
+  @OneToMany(() => CartItemEntity, (cartitem) => cartitem.cart, {
+    cascade: true,
+  })
+  cartItems: CartItemEntity[];
 }

@@ -1,11 +1,10 @@
-import { CartItemEntity } from 'src/cart/entities/cart-item.entity';
 import { CategoryEntity } from 'src/category/entities/category.entity';
 import {
   BaseEntity,
   Column,
   CreateDateColumn,
   Entity,
-  JoinColumn,
+  JoinTable,
   ManyToMany,
   OneToMany,
   OneToOne,
@@ -13,6 +12,8 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { VariantEntity } from './variants.entity';
+import { CartItemEntity } from 'src/cart/entities/cart-item.entity';
+import { TagsEntity } from './tags.entity';
 
 @Entity({ name: 'product' })
 export class ProductEntity extends BaseEntity {
@@ -25,25 +26,47 @@ export class ProductEntity extends BaseEntity {
   @Column()
   description: string;
 
-  @Column()
+  @Column({
+    type: 'decimal',
+    nullable: true,
+    default: 0,
+    precision: 10,
+    scale: 2,
+  })
   price: number;
 
-  @Column()
-  image: string;
+  @Column({ type: 'simple-array', nullable: true })
+  images: string[];
 
-  @OneToOne(() => VariantEntity, { cascade: true })
+  @Column({ type: 'int', default: 0, nullable: true })
+  stock: number;
+
+  @OneToOne(() => VariantEntity, (variant) => variant.product, {
+    cascade: true,
+  })
   variants: VariantEntity;
 
-  @ManyToMany(() => CategoryEntity, (category) => category.product)
-  @JoinColumn()
+  @ManyToMany(() => CategoryEntity, (category) => category.product, {
+    cascade: true,
+  })
   category: CategoryEntity[];
 
-  //@OneToMany(() => CartItemEntity, (cartItem) => cartItem.product)
-  //cartItems: CartItemEntity[];
+  @OneToMany(() => CartItemEntity, (cartItem) => cartItem.product, {
+    cascade: true,
+  })
+  cartItems: CartItemEntity[];
+
+  @ManyToMany(() => TagsEntity, (tag) => tag.products)
+  @JoinTable({
+    name: 'product_tag',
+    joinColumns: [{ name: 'productId', referencedColumnName: 'id' }],
+    inverseJoinColumns: [{ name: 'tagId', referencedColumnName: 'id' }],
+  })
+  tags: TagsEntity[];
 
   @CreateDateColumn()
-  createdAt: String;
+  createdAt: string;
 
   @UpdateDateColumn()
-  updtedAt: String;
+  updtedAt: string;
 }

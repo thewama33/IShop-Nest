@@ -1,13 +1,4 @@
-import { Exclude } from 'class-transformer';
-import {
-  IsDate,
-  IsEmail,
-  IsNotEmpty,
-  IsNumber,
-  IsPhoneNumber,
-  IsString,
-  IsStrongPassword,
-} from 'class-validator';
+import { IsEmail, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class CreateUserDto {
   @IsEmail()
@@ -15,4 +6,8 @@ export class CreateUserDto {
   email: string;
   @IsString()
   password: string;
+
+  @IsOptional()
+  @IsString()
+  fcmToken: string;
 }
