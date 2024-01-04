@@ -15,6 +15,7 @@ import { VariantEntity } from './variants.entity';
 import { CartItemEntity } from 'src/cart/entities/cart-item.entity';
 import { TagsEntity } from './tags.entity';
 import { WishlistEntity } from 'src/wishlist/entities/wishlist.entity';
+import { OrderItemEntity } from 'src/order/entities/order-item.entity';
 
 @Entity({ name: 'product' })
 export class ProductEntity extends BaseEntity {
@@ -57,7 +58,12 @@ export class ProductEntity extends BaseEntity {
   })
   cartItems: CartItemEntity[];
 
-  @OneToMany(() => WishlistEntity, (cartItem) => cartItem.product, {
+  @OneToMany(() => OrderItemEntity, (orderItem) => orderItem.product, {
+    cascade: true,
+  })
+  orderItems: OrderItemEntity[];
+
+  @OneToMany(() => WishlistEntity, (wishlistItem) => wishlistItem.product, {
     cascade: true,
   })
   wishlist: WishlistEntity[];

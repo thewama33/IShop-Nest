@@ -17,13 +17,23 @@ export class CartService {
   ) {}
 
   async getUserCart(currentUser) {
+    // Get the user's cart
     const userCart = await this.entityManager
-      .createQueryBuilder(CartItemEntity, 'cartItem')
-      .innerJoin('cartItem.cart', 'cart')
+      .createQueryBuilder(CartEntity, 'cart')
+      .innerJoinAndSelect('cart.cartItems', 'cartItem')
       .innerJoinAndSelect('cartItem.product', 'product')
       .where('cart.userId = :userId', { userId: currentUser.id })
       .andWhere('cart.isCompleted = :isCompleted', { isCompleted: false })
-      .getMany();
+      .select([
+        'product.id as productId',
+        'cartItem.quantity as quantity',
+        'cartItem.price as price',
+        'product.title as title',
+        'product.images as image',
+        'product.price as price',
+        'product.stock as stock',
+      ])
+      .getRawMany();
 
     return {
       code: HttpStatus.OK,

@@ -6,10 +6,14 @@ import {
   ParseIntPipe,
   Post,
   Query,
+  UseGuards,
   ValidationPipe,
 } from '@nestjs/common';
 import { CreateProductDto } from '../product/dto/create-product.dto';
 import { ProductService } from './product.service';
+import { AuthorizationGuard } from 'src/guards/authorization.guard';
+import { Roles } from 'src/utils/roles.decorator';
+import { Role } from 'src/constants/enums';
 
 @Controller('api/products')
 export class ProductController {

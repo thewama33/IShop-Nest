@@ -4,7 +4,6 @@ import {
   JoinColumn,
   ManyToOne,
   OneToMany,
-  OneToOne,
 } from 'typeorm';
 import { AbstractEntity } from 'src/utils/entity.abstraction';
 import { UserEntity } from 'src/users/entity/users.entity';
